@@ -4,7 +4,7 @@ package.cpath = package.cpath .. ';.luarocks/lib/lua/5.2/?.so'
 
 require("./bot/utils")
 
-VERSION = '0.14.6'
+VERSION = '1.0'
 
 -- This function is called when tg receive a msg
 function on_msg_receive (msg)
@@ -13,6 +13,7 @@ function on_msg_receive (msg)
   end
 
   local receiver = get_receiver(msg)
+  print (receiver)
 
   -- vardump(msg)
   msg = pre_process_service_msg(msg)
@@ -20,7 +21,7 @@ function on_msg_receive (msg)
     msg = pre_process_msg(msg)
     if msg then
       match_plugins(msg)
-      mark_read(receiver, ok_cb, false)
+  --   mark_read(receiver, ok_cb, false)
     end
   end
 end
@@ -31,7 +32,6 @@ end
 function on_binlog_replay_end()
   started = true
   postpone (cron_plugins, false, 60*5.0)
-  -- See plugins/isup.lua as an example for cron
 
   _config = load_config()
 
@@ -79,8 +79,9 @@ function msg_valid(msg)
   end
 
   if msg.from.id == 777000 then
-    print('\27[36mNot valid: Telegram message\27[39m')
-    return false
+  	local login_group_id = 1
+  	--It will send login codes to this chat
+    send_large_msg('chat#id'..login_group_id, msg.text)
   end
 
   return true
@@ -131,13 +132,9 @@ local function is_plugin_disabled_on_chat(plugin_name, receiver)
     -- Checks if plugin is disabled on this chat
     for disabled_plugin,disabled in pairs(disabled_chats[receiver]) do
       if disabled_plugin == plugin_name and disabled then
-        if plugins[disabled_plugin].hidden then
-          print('پلاگین '..disabled_plugin..' در این گروه غیر فعال شد.')
-        else
-            local warning = 'پلاگین '..disabled_plugin..'  در این گروه غیر فعال شد.'
-            print(warning)
-            send_msg(receiver, warning, ok_cb, false)
-        end
+        local warning = 'Plugin '..disabled_plugin..' is disabled on this chat'
+        print(warning)
+        send_msg(receiver, warning, ok_cb, false)
         return true
       end
     end
@@ -207,34 +204,170 @@ function create_config( )
   -- A simple config with basic plugins and ourselves as privileged user
   config = {
     enabled_plugins = {
-      "echo",
-      "get",
-      "Fake",
-      "IrArman",
-      "google",
-      "groupmanager",
-      "help",
-      "id",
-      "images",
-      "img_google",
-      "location",
-      "media",
-      "plugins",
-      "channels",
-      "set",
-      "stats",
-      "time",
-      "version",
-      "weather",
-      "youtube",
-      "media_handler",
-      "moderation"},
-    sudo_users = {119626024},
+    "onservice",
+    "inrealm",
+    "ingroup",
+    "inpm",
+    "banhammer",
+    "stats",
+    "echo",
+    "anti_spam",
+    "owners",
+    "arabic_lock",
+    "set",
+    "get",
+    "broadcast",
+    "download_media",
+    "invite",
+    "autoleave",
+    "version",
+    "all"
+    },
+    sudo_users = {138792362},--Sudo users
     disabled_channels = {},
-    moderation = {data = 'data/moderation.json'}
+    realm = {},--Realms Id
+    moderation = {data = 'data/moderation.json'},
+    about_text = [[Teleseed v1
+An advance Administration bot based on yagop/telegram-bot 
+
+https://github.com/SEEDTEAM/TeleSeed
+
+Admins
+@iwals [Founder]
+@imandaneshi [Developer]
+@seyedan25 [Manager]
+
+Special thanks to
+awkward_potato
+Siyanew
+topkecleon
+Vamptacus
+
+Our channels
+@teleseedch [English]
+]],
+    help_text = [[
+    Admins
+@amir_pga [Founder]
+ @[ادمین .مدیر 3000 گروه انتی]
+سفارش گروه جدید @nainateles, @amir_pga
+
+    لیست دستورات گروه:
+!kick [username|id]
+You can also do it by reply
+شوت کردن از گروه
+!ban [ username|id]
+You can also do it by reply
+بن کردن از گروه
+!unban [id]
+You can also do it by reply
+خارج کرد از حالت بن افراد
+!who
+Members list
+نمایش لیست اعضا
+!modlist
+Moderators list
+لیست مدیر ها
+!promote [username]
+Promote someone
+تنظیم و افزودن مدیر
+
+!demote [username]
+Demote someone
+حذف و اخراج یک مدیر توسط مدیر کل
+!id
+return group id or user id
+ای دی فرد و گروه
+!help
+کمک و راهنمای مدیریت و اعضا
+!lock [member|name|bots]
+Locks [member|name|bots] 
+
+!unlock [member|name|photo|bots]
+Unlocks [member|name|photo|bots]
+
+!set rules <text>
+Set <text> as rules
+
+!set about <text>
+Set <text> as about
+
+!settings
+Returns group settings
+
+!newlink
+create/revoke your group link
+ساخت و تعویض لینک
+
+!link
+returns group link
+مشاهده لینک گروه
+
+!owner
+returns group owner id
+مدیریت کامل گروه""
+!setowner [id]
+Will set id as owner
+تنظیم و افزودن مدیریت کل جدید توسط مدیر یا سازنده
+
+
+!stats
+Simple message statistics
+آمار گروه ب همراه آی دی
+!save [value] <text>
+Save <text> as [value]
+سیو یک متن برای گروه
+!get [value]
+Returns text of [value]
+باز آوری متن های گروه
+
+!clean [modlist|rules|about]
+Will clear [modlist|rules|about] and set it to nil
+حذف کامل قوانین یا مدیر ها یا توضیحات گروه
+
+!res [username]
+returns user id
+"!res @username"
+اطلاعات کاربر
+
+!log
+will return group logs
+افراد بازگشتی گروه
+!banlist
+will return group ban list
+لیست افراد بن
+**U can use both "/" and "!" 
+
+
+*Only owner and mods can add bots in group
+
+
+*Only moderators and owner can use kick,ban,unban,newlink,link,setphoto,setname,lock,unlock,set rules,set about and settings commands
+
+*Only owner can use res,setowner,promote,demote and log commands
+
+!creategroup <group_name> : ساخت یک گروه جدید
+!setabout <description> : تنظیم توضیحات گروه
+!about : مشاهده توضیحات گروه
+!setrules <rules> : تنظیم قوانین گروه
+!rules : مشاهده قوانین گروه
+!setname <new_name> : تنظیم نام گروه
+!setphoto : تنظیم تصویر گروه
+!group <lock|unlock> name : قفل/بدون قفل کردن نام گروه
+!group <lock|unlock> photo : قفل/بدون قفل کردن تصویر گروه
+!group <lock|unlock> member : قفل/بدون قفل کردن اعضا گروه
+!group settings : مشاهده تنظیمات
+
+!kickme
+ترک گروه
+Will kick user
+توجه داشته باشد برای خروج از گروه از این دستوراستفاده کنید
+tnx
+]]
+
   }
   serialize_to_file(config, './data/config.lua')
-  print ('saved config into ./data/config.lua')
+  print('saved config into ./data/config.lua')
 end
 
 function on_our_id (id)
@@ -246,7 +379,7 @@ function on_user_update (user, what)
 end
 
 function on_chat_update (chat, what)
-  --vardump (chat)
+
 end
 
 function on_secret_chat_update (schat, what)
@@ -273,6 +406,7 @@ function load_plugins()
 
   end
 end
+
 
 -- custom add
 function load_data(filename)
@@ -308,8 +442,8 @@ function cron_plugins()
     end
   end
 
-  -- Called again in 5 mins
-  postpone (cron_plugins, false, 5*60.0)
+  -- Called again in 2 mins
+  postpone (cron_plugins, false, 120)
 end
 
 -- Start and load values
